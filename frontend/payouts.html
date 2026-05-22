@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Payouts — VendorHub Admin</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-icon">🛒</div>
+    <h5>VendorHub</h5>
+    <small>Admin Panel v1.0</small>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section-label">Main</div>
+    <a href="index.html"><span class="nav-icon">📊</span> Dashboard</a>
+    <div class="nav-section-label">Management</div>
+    <a href="sellers.html"><span class="nav-icon">🏪</span> Sellers</a>
+    <a href="products.html"><span class="nav-icon">📦</span> Products</a>
+    <a href="orders.html"><span class="nav-icon">🧾</span> Orders</a>
+    <div class="nav-section-label">Operations</div>
+    <a href="returns.html"><span class="nav-icon">↩️</span> Returns</a>
+    <a href="payouts.html"><span class="nav-icon">💰</span> Payouts</a>
+  </nav>
+  <div class="sidebar-footer"><small>© 2025 VendorHub Inc.</small></div>
+</aside>
+
+<div class="main-content">
+  <div class="topbar">
+    <div><span class="topbar-title">Payouts</span><span class="topbar-subtitle">/ Seller Disbursements</span></div>
+    <div class="topbar-right">
+      <span class="topbar-badge">Commission: 10%</span>
+      <button class="btn-outline" onclick="loadPayouts()" style="font-size:12px;padding:7px 14px">↻ Refresh</button>
+    </div>
+  </div>
+
+  <div class="page-body">
+
+    <!-- STAT STRIP -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:18px;margin-bottom:26px">
+      <div class="stat-card">
+        <div class="stat-icon amber" style="margin-bottom:12px">💰</div>
+        <div class="stat-value" id="p-total-pending">—</div>
+        <div class="stat-label">Total Pending Payouts</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon green" style="margin-bottom:12px">✅</div>
+        <div class="stat-value" id="p-total-processed">—</div>
+        <div class="stat-label">Total Disbursed</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon red" style="margin-bottom:12px">🚫</div>
+        <div class="stat-value" id="p-total-hold">—</div>
+        <div class="stat-label">On Hold</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon indigo" style="margin-bottom:12px">📋</div>
+        <div class="stat-value" id="p-count">—</div>
+        <div class="stat-label">Total Records</div>
+      </div>
+    </div>
+
+    <!-- SELLER SUMMARY CARDS -->
+    <div class="card" style="margin-bottom:24px">
+      <div class="card-header-custom">
+        <h6>Seller Payout Summary</h6>
+        <div class="search-bar">
+          <span>🔍</span>
+          <input type="text" id="seller-search" placeholder="Search seller..." oninput="filterSummary()">
+        </div>
+      </div>
+      <div class="card-body-custom">
+        <div id="seller-summary-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px">
+          <div style="color:var(--text-muted);font-size:13px">Loading seller summaries...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAYOUT DETAIL TABLE -->
+    <div class="card">
+      <div class="card-header-custom">
+        <h6>Payout Records <span id="payout-count" style="font-size:12px;color:var(--text-muted);font-weight:400"></span></h6>
+        <div style="display:flex;gap:10px;align-items:center">
+          <div style="display:flex;gap:8px">
+            <button class="filter-tab active" onclick="filterPayouts('ALL',this)">All</button>
+            <button class="filter-tab" onclick="filterPayouts('PENDING',this)">Pending</button>
+            <button class="filter-tab" onclick="filterPayouts('PROCESSED',this)">Processed</button>
+            <button class="filter-tab" onclick="filterPayouts('HOLD',this)">Hold</button>
+          </div>
+        </div>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="custom-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Seller</th>
+              <th>Order No.</th>
+              <th>Product</th>
+              <th>Sale Amount</th>
+              <th>Commission (10%)</th>
+              <th>Net Payout</th>
+              <th>Status</th>
+              <th>Created</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="payouts-tbody">
+            <tr><td colspan="10"><div class="empty-state"><div class="empty-icon">💰</div><p>Loading payouts...</p></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- BUSINESS RULES -->
+    <div style="margin-top:24px;background:rgba(16,185,129,.04);border:1px solid rgba(16,185,129,.2);border-radius:12px;padding:20px">
+      <div style="font-size:13px;font-weight:700;color:var(--success);margin-bottom:12px">💡 Payout Business Rules</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px">
+        <div style="display:flex;gap:8px;align-items:flex-start">
+          <span style="color:var(--success);font-weight:700;flex-shrink:0">✓</span>
+          <span style="font-size:13px;color:var(--text-secondary)">Payouts are generated <strong>ONLY after order DELIVERY</strong></span>
+        </div>
+        <div style="display:flex;gap:8px;align-items:flex-start">
+          <span style="color:var(--success);font-weight:700;flex-shrink:0">✓</span>
+          <span style="font-size:13px;color:var(--text-secondary)">Platform commission = <strong>10%</strong> of item sale amount</span>
+        </div>
+        <div style="display:flex;gap:8px;align-items:flex-start">
+          <span style="color:var(--success);font-weight:700;flex-shrink:0">✓</span>
+          <span style="font-size:13px;color:var(--text-secondary)">Net payout = Sale amount − Commission</span>
+        </div>
+        <div style="display:flex;gap:8px;align-items:flex-start">
+          <span style="color:var(--success);font-weight:700;flex-shrink:0">✓</span>
+          <span style="font-size:13px;color:var(--text-secondary)">Return approval places payout on <strong>HOLD</strong></span>
+        </div>
+        <div style="display:flex;gap:8px;align-items:flex-start">
+          <span style="color:var(--success);font-weight:700;flex-shrink:0">✓</span>
+          <span style="font-size:13px;color:var(--text-secondary)">Admin can process PENDING payouts manually</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<style>
+.filter-tab {
+  padding: 5px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: 20px;
+  background: var(--surface);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all .2s;
+}
+.filter-tab:hover { border-color: var(--accent); color: var(--accent); }
+.filter-tab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+.seller-summary-card {
+  background: var(--surface-2);
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  padding: 18px;
+  transition: all .2s;
+  cursor: pointer;
+}
+.seller-summary-card:hover {
+  border-color: var(--accent);
+  box-shadow: 0 4px 16px rgba(99,102,241,.1);
+  transform: translateY(-2px);
+}
+</style>
+
+<script src="js/api.js"></script>
+<script>
+
+let allPayouts = [];
+let allSellers = [];
+let summaryData = [];
+let currentFilter = 'ALL';
+
+async function init() {
+  showLoading();
+  try {
+    [allPayouts, allSellers] = await Promise.all([
+      apiGet('/payouts'),
+      apiGet('/sellers')
+    ]);
+    renderStats(allPayouts);
+    await buildSellerSummaries();
+    renderPayouts(allPayouts);
+    document.getElementById('payout-count').textContent = `(${allPayouts.length})`;
+    document.getElementById('p-count').textContent = allPayouts.length;
+  } catch(e) {
+    showToast('Failed to load data: ' + e.message, 'error');
+  } finally { hideLoading(); }
+}
+
+function renderStats(list) {
+  const pending   = list.filter(p => p.status === 'PENDING').reduce((s, p) => s + parseFloat(p.netPayout || 0), 0);
+  const processed = list.filter(p => p.status === 'PROCESSED').reduce((s, p) => s + parseFloat(p.netPayout || 0), 0);
+  const hold      = list.filter(p => p.status === 'HOLD').reduce((s, p) => s + parseFloat(p.netPayout || 0), 0);
+
+  document.getElementById('p-total-pending').textContent   = formatCurrency(pending);
+  document.getElementById('p-total-processed').textContent = formatCurrency(processed);
+  document.getElementById('p-total-hold').textContent      = formatCurrency(hold);
+}
+
+async function buildSellerSummaries() {
+  const grid = document.getElementById('seller-summary-grid');
+  const activeSellers = allSellers.filter(s => s.status === 'ACTIVE');
+
+  if (!activeSellers.length) {
+    grid.innerHTML = '<div style="color:var(--text-muted);font-size:13px">No active sellers.</div>';
+    return;
+  }
+
+  summaryData = [];
+  const cards = await Promise.all(activeSellers.map(async seller => {
+    try {
+      const summary = await apiGet(`/payouts/seller/${seller.id}/summary`);
+      summaryData.push({ seller, summary });
+      return buildSummaryCard(seller, summary);
+    } catch {
+      summaryData.push({ seller, summary: null });
+      return buildSummaryCard(seller, null);
+    }
+  }));
+  grid.innerHTML = cards.join('');
+}
+
+function buildSummaryCard(seller, summary) {
+  const pending   = summary ? formatCurrency(summary.totalPending)   : '—';
+  const processed = summary ? formatCurrency(summary.totalProcessed) : '—';
+  const sellerPayouts = allPayouts.filter(p => p.sellerId === seller.id);
+  const pendingCount  = sellerPayouts.filter(p => p.status === 'PENDING').length;
+
+  return `
+    <div class="seller-summary-card" onclick="filterBySeller(${seller.id})">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px">
+        <div>
+          <div style="font-weight:700;font-size:14px;color:var(--text-primary)">${seller.name}</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:2px">${seller.email}</div>
+        </div>
+        ${pendingCount > 0
+          ? `<span style="background:rgba(245,158,11,.1);color:var(--warning);font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px">${pendingCount} pending</span>`
+          : `<span style="background:rgba(16,185,129,.1);color:var(--success);font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px">All clear</span>`}
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div style="background:var(--surface);border-radius:8px;padding:10px 12px">
+          <div style="font-size:10px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px">Pending</div>
+          <div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:800;color:var(--warning);margin-top:3px">${pending}</div>
+        </div>
+        <div style="background:var(--surface);border-radius:8px;padding:10px 12px">
+          <div style="font-size:10px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px">Disbursed</div>
+          <div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:800;color:var(--success);margin-top:3px">${processed}</div>
+        </div>
+      </div>
+      <div style="margin-top:10px;font-size:11px;color:var(--accent);font-weight:600">Click to filter →</div>
+    </div>`;
+}
+
+function filterSummary() {
+  const q = document.getElementById('seller-search').value.toLowerCase();
+  const grid = document.getElementById('seller-summary-grid');
+  const filtered = summaryData.filter(d => d.seller.name.toLowerCase().includes(q));
+  grid.innerHTML = filtered.map(d => buildSummaryCard(d.seller, d.summary)).join('');
+}
+
+function filterBySeller(sellerId) {
+  const filtered = allPayouts.filter(p => p.sellerId === sellerId);
+  renderPayouts(filtered);
+  document.getElementById('payout-count').textContent = `(${filtered.length} — Seller #${sellerId})`;
+  document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+}
+
+function filterPayouts(status, btn) {
+  currentFilter = status;
+  document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  const filtered = status === 'ALL' ? allPayouts : allPayouts.filter(p => p.status === status);
+  renderPayouts(filtered);
+  document.getElementById('payout-count').textContent = `(${filtered.length})`;
+}
+
+function renderPayouts(list) {
+  const tbody = document.getElementById('payouts-tbody');
+  if (!list.length) {
+    tbody.innerHTML = `<tr><td colspan="10"><div class="empty-state"><div class="empty-icon">💰</div><p>No payout records found. Payouts are generated automatically when orders are delivered.</p></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = list.map(p => `
+    <tr>
+      <td><strong>#${p.id}</strong></td>
+      <td>
+        <div style="font-weight:600;font-size:13px">${p.sellerName}</div>
+        <div style="font-size:11px;color:var(--text-muted)">ID: ${p.sellerId}</div>
+      </td>
+      <td>
+        <span style="font-family:monospace;font-size:11px;background:var(--surface-2);padding:2px 7px;border-radius:5px;color:var(--accent)">
+          ${p.orderNumber}
+        </span>
+      </td>
+      <td style="font-size:13px;color:var(--text-secondary)">${p.productName}</td>
+      <td class="text-amount">${formatCurrency(p.amount)}</td>
+      <td>
+        <div style="font-size:13px;color:var(--danger);font-weight:600">−${formatCurrency(p.commissionAmt)}</div>
+        <div style="font-size:10px;color:var(--text-muted)">${p.commissionPct}%</div>
+      </td>
+      <td>
+        <div class="text-amount" style="color:var(--success)">${formatCurrency(p.netPayout)}</div>
+      </td>
+      <td>${badgeHtml(p.status)}</td>
+      <td style="font-size:11px;color:var(--text-muted)">${formatDate(p.createdAt)}</td>
+      <td>
+        ${p.status === 'PENDING'
+          ? `<button class="btn-sm-action btn-success-sm" onclick="processPayout(${p.id})">💸 Disburse</button>`
+          : p.status === 'PROCESSED'
+            ? `<span style="font-size:11px;color:var(--success);font-weight:600">✓ Done ${formatDate(p.processedAt)}</span>`
+            : `<span style="font-size:11px;color:var(--warning);font-weight:600">On Hold</span>`}
+      </td>
+    </tr>`).join('');
+}
+
+async function processPayout(id) {
+  if (!confirm(`Disburse payout #${id} to the seller? This action cannot be undone.`)) return;
+  showLoading();
+  try {
+    await apiPatch(`/payouts/${id}/process`);
+    showToast('Payout disbursed successfully!', 'success');
+    await init();
+  } catch(e) {
+    showToast(e.message, 'error');
+  } finally { hideLoading(); }
+}
+
+async function loadPayouts() {
+  await init();
+}
+
+init();
+</script>
+</body>
+</html>

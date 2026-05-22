@@ -1,0 +1,5 @@
+com\multivendor\ecommerce\SellerServiceTest.class
+com\multivendor\ecommerce\OrderServiceTest.class
+com\multivendor\ecommerce\PayoutServiceTest.class
+com\multivendor\ecommerce\ReturnServiceTest.class
+com\multivendor\ecommerce\InventoryServiceTest.class

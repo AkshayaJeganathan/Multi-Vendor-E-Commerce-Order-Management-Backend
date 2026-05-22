@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Returns — VendorHub Admin</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-icon">🛒</div>
+    <h5>VendorHub</h5>
+    <small>Admin Panel v1.0</small>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section-label">Main</div>
+    <a href="index.html"><span class="nav-icon">📊</span> Dashboard</a>
+    <div class="nav-section-label">Management</div>
+    <a href="sellers.html"><span class="nav-icon">🏪</span> Sellers</a>
+    <a href="products.html"><span class="nav-icon">📦</span> Products</a>
+    <a href="orders.html"><span class="nav-icon">🧾</span> Orders</a>
+    <div class="nav-section-label">Operations</div>
+    <a href="returns.html"><span class="nav-icon">↩️</span> Returns</a>
+    <a href="payouts.html"><span class="nav-icon">💰</span> Payouts</a>
+  </nav>
+  <div class="sidebar-footer"><small>© 2025 VendorHub Inc.</small></div>
+</aside>
+
+<div class="main-content">
+  <div class="topbar">
+    <div><span class="topbar-title">Returns</span><span class="topbar-subtitle">/ Approval Management</span></div>
+    <div class="topbar-right">
+      <button class="btn-accent" onclick="toggleSection('return-form-section')">+ Raise Return</button>
+    </div>
+  </div>
+
+  <div class="page-body">
+
+    <!-- STAT STRIP -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:16px;margin-bottom:24px">
+      <div class="stat-card" style="padding:18px 20px">
+        <div class="stat-icon amber" style="width:36px;height:36px;font-size:16px;margin-bottom:10px">↩️</div>
+        <div class="stat-value" style="font-size:24px" id="r-total">—</div>
+        <div class="stat-label">Total Returns</div>
+      </div>
+      <div class="stat-card" style="padding:18px 20px">
+        <div class="stat-icon amber" style="width:36px;height:36px;font-size:16px;margin-bottom:10px">⏳</div>
+        <div class="stat-value" style="font-size:24px" id="r-requested">—</div>
+        <div class="stat-label">Pending</div>
+      </div>
+      <div class="stat-card" style="padding:18px 20px">
+        <div class="stat-icon green" style="width:36px;height:36px;font-size:16px;margin-bottom:10px">✓</div>
+        <div class="stat-value" style="font-size:24px" id="r-approved">—</div>
+        <div class="stat-label">Approved</div>
+      </div>
+      <div class="stat-card" style="padding:18px 20px">
+        <div class="stat-icon red" style="width:36px;height:36px;font-size:16px;margin-bottom:10px">✕</div>
+        <div class="stat-value" style="font-size:24px" id="r-rejected">—</div>
+        <div class="stat-label">Rejected</div>
+      </div>
+    </div>
+
+    <!-- RAISE RETURN FORM -->
+    <div class="form-section" id="return-form-section" style="margin-bottom:24px;display:none">
+      <h6>↩️ Raise Return Request</h6>
+      <div style="background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.2);border-radius:8px;padding:12px 16px;margin-bottom:18px;font-size:13px;color:#92400e">
+        ⚠️ A return can only be raised for orders in <strong>DELIVERED</strong> status. Inventory will be restored automatically upon approval.
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px">
+        <div>
+          <label class="form-label-custom">Order ID *</label>
+          <input class="form-control-custom" id="r-order-id" type="number" placeholder="Enter Order ID" oninput="loadOrderItems()">
+        </div>
+        <div>
+          <label class="form-label-custom">Order Item *</label>
+          <select class="form-control-custom" id="r-item-id">
+            <option value="">— Enter Order ID first —</option>
+          </select>
+        </div>
+        <div style="grid-column:1/-1">
+          <label class="form-label-custom">Reason for Return *</label>
+          <textarea class="form-control-custom" id="r-reason" rows="3" placeholder="Describe the reason for return (e.g. defective product, wrong item shipped, damaged packaging)"></textarea>
+        </div>
+      </div>
+      <div style="margin-top:18px;display:flex;gap:10px">
+        <button class="btn-accent" onclick="submitReturn()">Submit Return Request</button>
+        <button class="btn-outline" onclick="toggleSection('return-form-section')">Cancel</button>
+      </div>
+    </div>
+
+    <!-- FILTER TABS -->
+    <div style="display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap">
+      <button class="filter-tab active" onclick="filterByStatus('ALL',this)">All Returns</button>
+      <button class="filter-tab" onclick="filterByStatus('REQUESTED',this)">Pending</button>
+      <button class="filter-tab" onclick="filterByStatus('APPROVED',this)">Approved</button>
+      <button class="filter-tab" onclick="filterByStatus('REJECTED',this)">Rejected</button>
+      <button class="filter-tab" onclick="filterByStatus('COMPLETED',this)">Completed</button>
+    </div>
+
+    <!-- RETURNS TABLE -->
+    <div class="card">
+      <div class="card-header-custom">
+        <h6>Return Requests <span id="return-count" style="font-size:12px;color:var(--text-muted);font-weight:400"></span></h6>
+        <button class="btn-outline" onclick="loadReturns()" style="font-size:12px;padding:7px 14px">↻ Refresh</button>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="custom-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Order No.</th>
+              <th>Product</th>
+              <th>Reason</th>
+              <th>Status</th>
+              <th>Requested At</th>
+              <th>Resolved At</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="returns-tbody">
+            <tr><td colspan="8"><div class="empty-state"><div class="empty-icon">↩️</div><p>Loading returns...</p></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- BUSINESS RULES INFO -->
+    <div style="margin-top:24px;background:rgba(99,102,241,.05);border:1px solid rgba(99,102,241,.2);border-radius:12px;padding:20px">
+      <div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:12px">📋 Return Business Rules</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px">
+        <div style="display:flex;gap:8px;align-items:flex-start">
+          <span style="color:var(--success);font-weight:700;flex-shrink:0">✓</span>
+          <span style="font-size:13px;color:var(--text-secondary)">Return can only be requested on <strong>DELIVERED</strong> orders</span>
+        </div>
+        <div style="display:flex;gap:8px;align-items:flex-start">
+          <span style="color:var(--success);font-weight:700;flex-shrink:0">✓</span>
+          <span style="font-size:13px;color:var(--text-secondary)">On <strong>APPROVAL</strong> → inventory is restored automatically</span>
+        </div>
+        <div style="display:flex;gap:8px;align-items:flex-start">
+          <span style="color:var(--success);font-weight:700;flex-shrink:0">✓</span>
+          <span style="font-size:13px;color:var(--text-secondary)">On <strong>APPROVAL</strong> → seller payout is placed on HOLD</span>
+        </div>
+        <div style="display:flex;gap:8px;align-items:flex-start">
+          <span style="color:var(--success);font-weight:700;flex-shrink:0">✓</span>
+          <span style="font-size:13px;color:var(--text-secondary)">On <strong>REJECTION</strong> → order reverts to DELIVERED status</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<style>
+.filter-tab {
+  padding: 7px 16px;
+  border: 1.5px solid var(--border);
+  border-radius: 20px;
+  background: var(--surface);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all .2s;
+}
+.filter-tab:hover { border-color: var(--accent); color: var(--accent); }
+.filter-tab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+</style>
+
+<script src="js/api.js"></script>
+<script>
+
+let allReturns = [];
+let currentFilter = 'ALL';
+
+async function loadReturns() {
+  showLoading();
+  try {
+    allReturns = await apiGet('/returns');
+    renderStats(allReturns);
+    renderReturns(allReturns);
+    document.getElementById('return-count').textContent = `(${allReturns.length})`;
+  } catch(e) {
+    showToast('Failed to load returns: ' + e.message, 'error');
+  } finally { hideLoading(); }
+}
+
+function renderStats(list) {
+  document.getElementById('r-total').textContent = list.length;
+  document.getElementById('r-requested').textContent = list.filter(r => r.status === 'REQUESTED').length;
+  document.getElementById('r-approved').textContent  = list.filter(r => r.status === 'APPROVED').length;
+  document.getElementById('r-rejected').textContent  = list.filter(r => r.status === 'REJECTED').length;
+}
+
+function filterByStatus(status, btn) {
+  currentFilter = status;
+  document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  const filtered = status === 'ALL' ? allReturns : allReturns.filter(r => r.status === status);
+  renderReturns(filtered);
+  document.getElementById('return-count').textContent = `(${filtered.length})`;
+}
+
+function renderReturns(list) {
+  const tbody = document.getElementById('returns-tbody');
+  if (!list.length) {
+    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><div class="empty-icon">↩️</div><p>No return requests found.</p></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = list.map(r => `
+    <tr>
+      <td><strong>#${r.id}</strong></td>
+      <td>
+        <span style="font-family:monospace;font-size:12px;background:var(--surface-2);padding:3px 8px;border-radius:6px;color:var(--accent)">
+          ${r.orderNumber}
+        </span>
+      </td>
+      <td><strong>${r.productName || '—'}</strong></td>
+      <td>
+        <span style="font-size:12px;color:var(--text-secondary);display:block;max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${r.reason}">
+          ${r.reason}
+        </span>
+      </td>
+      <td>${badgeHtml(r.status)}</td>
+      <td style="font-size:12px;color:var(--text-muted)">${formatDate(r.requestedAt)}</td>
+      <td style="font-size:12px;color:var(--text-muted)">${r.resolvedAt ? formatDate(r.resolvedAt) : '—'}</td>
+      <td>
+        ${r.status === 'REQUESTED' ? `
+          <div style="display:flex;gap:6px">
+            <button class="btn-sm-action btn-success-sm" onclick="approveReturn(${r.id})">✓ Approve</button>
+            <button class="btn-sm-action btn-danger-sm"  onclick="rejectReturn(${r.id})">✕ Reject</button>
+          </div>` : `<span style="font-size:12px;color:var(--text-muted)">—</span>`}
+      </td>
+    </tr>`).join('');
+}
+
+async function loadOrderItems() {
+  const orderId = document.getElementById('r-order-id').value;
+  const itemSel = document.getElementById('r-item-id');
+  if (!orderId) {
+    itemSel.innerHTML = '<option value="">— Enter Order ID first —</option>';
+    return;
+  }
+  try {
+    const order = await apiGet(`/orders/${orderId}`);
+    if (order.status !== 'DELIVERED') {
+      itemSel.innerHTML = `<option value="">⚠ Order is ${order.status}, not DELIVERED</option>`;
+      return;
+    }
+    const items = order.items || [];
+    if (!items.length) {
+      itemSel.innerHTML = '<option value="">No items found</option>';
+      return;
+    }
+    itemSel.innerHTML = '<option value="">— Select Item —</option>' +
+      items.map(i => `<option value="${i.id}">${i.productName} (Qty: ${i.quantity}, ${formatCurrency(i.totalPrice)})</option>`).join('');
+  } catch(e) {
+    itemSel.innerHTML = `<option value="">Order #${orderId} not found</option>`;
+  }
+}
+
+async function submitReturn() {
+  const orderId     = parseInt(document.getElementById('r-order-id').value);
+  const orderItemId = parseInt(document.getElementById('r-item-id').value);
+  const reason      = document.getElementById('r-reason').value.trim();
+
+  if (!orderId || !orderItemId || !reason) {
+    showToast('All fields are required.', 'error'); return;
+  }
+  showLoading();
+  try {
+    await apiPost('/returns', { orderId, orderItemId, reason });
+    showToast('Return request submitted!', 'success');
+    document.getElementById('r-order-id').value = '';
+    document.getElementById('r-reason').value   = '';
+    document.getElementById('r-item-id').innerHTML = '<option value="">— Enter Order ID first —</option>';
+    toggleSection('return-form-section');
+    loadReturns();
+  } catch(e) {
+    showToast(e.message, 'error');
+  } finally { hideLoading(); }
+}
+
+async function approveReturn(id) {
+  if (!confirm(`Approve return #${id}? This will restore inventory and place the seller payout on HOLD.`)) return;
+  showLoading();
+  try {
+    await apiPatch(`/returns/${id}/approve`);
+    showToast('Return approved. Inventory restored.', 'success');
+    loadReturns();
+  } catch(e) {
+    showToast(e.message, 'error');
+  } finally { hideLoading(); }
+}
+
+async function rejectReturn(id) {
+  if (!confirm(`Reject return #${id}? The order will revert to DELIVERED status.`)) return;
+  showLoading();
+  try {
+    await apiPatch(`/returns/${id}/reject`);
+    showToast('Return rejected.', 'info');
+    loadReturns();
+  } catch(e) {
+    showToast(e.message, 'error');
+  } finally { hideLoading(); }
+}
+
+function toggleSection(id) {
+  const el = document.getElementById(id);
+  el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
+loadReturns();
+</script>
+</body>
+</html>

@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sellers — VendorHub Admin</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-icon">🛒</div>
+    <h5>VendorHub</h5>
+    <small>Admin Panel v1.0</small>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section-label">Main</div>
+    <a href="index.html"><span class="nav-icon">📊</span> Dashboard</a>
+    <div class="nav-section-label">Management</div>
+    <a href="sellers.html"><span class="nav-icon">🏪</span> Sellers</a>
+    <a href="products.html"><span class="nav-icon">📦</span> Products</a>
+    <a href="orders.html"><span class="nav-icon">🧾</span> Orders</a>
+    <div class="nav-section-label">Operations</div>
+    <a href="returns.html"><span class="nav-icon">↩️</span> Returns</a>
+    <a href="payouts.html"><span class="nav-icon">💰</span> Payouts</a>
+  </nav>
+  <div class="sidebar-footer"><small>© 2025 VendorHub Inc.</small></div>
+</aside>
+
+<div class="main-content">
+  <div class="topbar">
+    <div><span class="topbar-title">Sellers</span><span class="topbar-subtitle">/ Manage</span></div>
+    <div class="topbar-right">
+      <button class="btn-accent" onclick="toggleForm()">+ Add Seller</button>
+    </div>
+  </div>
+
+  <div class="page-body">
+
+    <!-- STAT STRIP -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:16px;margin-bottom:24px">
+      <div class="stat-card" style="padding:18px 20px">
+        <div class="stat-icon indigo" style="width:36px;height:36px;font-size:16px;margin-bottom:10px">🏪</div>
+        <div class="stat-value" style="font-size:24px" id="s-total">—</div>
+        <div class="stat-label">Total Sellers</div>
+      </div>
+      <div class="stat-card" style="padding:18px 20px">
+        <div class="stat-icon green" style="width:36px;height:36px;font-size:16px;margin-bottom:10px">✅</div>
+        <div class="stat-value" style="font-size:24px" id="s-active">—</div>
+        <div class="stat-label">Active</div>
+      </div>
+      <div class="stat-card" style="padding:18px 20px">
+        <div class="stat-icon amber" style="width:36px;height:36px;font-size:16px;margin-bottom:10px">⏸</div>
+        <div class="stat-value" style="font-size:24px" id="s-inactive">—</div>
+        <div class="stat-label">Inactive</div>
+      </div>
+      <div class="stat-card" style="padding:18px 20px">
+        <div class="stat-icon red" style="width:36px;height:36px;font-size:16px;margin-bottom:10px">🚫</div>
+        <div class="stat-value" style="font-size:24px" id="s-suspended">—</div>
+        <div class="stat-label">Suspended</div>
+      </div>
+    </div>
+
+    <!-- ADD FORM -->
+    <div class="form-section" id="add-form" style="margin-bottom:24px;display:none">
+      <h6>➕ Register New Seller</h6>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px">
+        <div>
+          <label class="form-label-custom">Full Name *</label>
+          <input class="form-control-custom" id="s-name" placeholder="e.g. TechZone Electronics">
+        </div>
+        <div>
+          <label class="form-label-custom">Email *</label>
+          <input class="form-control-custom" id="s-email" type="email" placeholder="seller@email.com">
+        </div>
+        <div>
+          <label class="form-label-custom">Phone *</label>
+          <input class="form-control-custom" id="s-phone" placeholder="9876543210">
+        </div>
+        <div>
+          <label class="form-label-custom">GST Number</label>
+          <input class="form-control-custom" id="s-gst" placeholder="GST123456">
+        </div>
+        <div style="grid-column:1/-1">
+          <label class="form-label-custom">Address</label>
+          <input class="form-control-custom" id="s-address" placeholder="Full business address">
+        </div>
+      </div>
+      <div style="margin-top:18px;display:flex;gap:10px">
+        <button class="btn-accent" onclick="addSeller()">Register Seller</button>
+        <button class="btn-outline" onclick="toggleForm()">Cancel</button>
+      </div>
+    </div>
+
+    <!-- TABLE -->
+    <div class="card">
+      <div class="card-header-custom">
+        <h6>All Sellers <span id="seller-count" style="font-size:12px;color:var(--text-muted);font-weight:400"></span></h6>
+        <div style="display:flex;gap:10px;align-items:center">
+          <div class="search-bar">
+            <span>🔍</span>
+            <input type="text" id="seller-search" placeholder="Search sellers..." oninput="filterSellers()">
+          </div>
+          <button class="btn-outline" onclick="loadSellers()" style="padding:7px 14px;font-size:12px">↻ Refresh</button>
+        </div>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="custom-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Phone</th>
+              <th>GST Number</th>
+              <th>Status</th>
+              <th>Registered</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="sellers-tbody">
+            <tr><td colspan="8"><div class="empty-state"><div class="empty-icon">🏪</div><p>Loading sellers...</p></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="js/api.js"></script>
+<script>
+
+let allSellers = [];
+
+async function loadSellers() {
+  showLoading();
+  try {
+    allSellers = await apiGet('/sellers');
+    renderStats(allSellers);
+    renderSellers(allSellers);
+    document.getElementById('seller-count').textContent = `(${allSellers.length})`;
+  } catch(e) {
+    showToast('Failed to load sellers: ' + e.message, 'error');
+  } finally { hideLoading(); }
+}
+
+function renderStats(list) {
+  document.getElementById('s-total').textContent     = list.length;
+  document.getElementById('s-active').textContent    = list.filter(s => s.status === 'ACTIVE').length;
+  document.getElementById('s-inactive').textContent  = list.filter(s => s.status === 'INACTIVE').length;
+  document.getElementById('s-suspended').textContent = list.filter(s => s.status === 'SUSPENDED').length;
+}
+
+function renderSellers(list) {
+  const tbody = document.getElementById('sellers-tbody');
+  if (!list.length) {
+    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><div class="empty-icon">🏪</div><p>No sellers found.</p></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = list.map(s => `
+    <tr>
+      <td><strong>#${s.id}</strong></td>
+      <td>
+        <div style="font-weight:600">${s.name}</div>
+        <div style="font-size:11px;color:var(--text-muted)">${s.address || ''}</div>
+      </td>
+      <td style="color:var(--text-secondary)">${s.email}</td>
+      <td>${s.phone}</td>
+      <td><code style="font-size:11px;background:var(--surface-2);padding:2px 7px;border-radius:4px">${s.gstNumber || '—'}</code></td>
+      <td>${badgeHtml(s.status)}</td>
+      <td style="color:var(--text-muted);font-size:12px">${formatDate(s.createdAt)}</td>
+      <td>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          ${s.status !== 'ACTIVE'
+            ? `<button class="btn-sm-action btn-success-sm" onclick="updateStatus(${s.id},'ACTIVE')">Activate</button>` : ''}
+          ${s.status !== 'INACTIVE'
+            ? `<button class="btn-sm-action btn-warning-sm" onclick="updateStatus(${s.id},'INACTIVE')">Deactivate</button>` : ''}
+          ${s.status !== 'SUSPENDED'
+            ? `<button class="btn-sm-action btn-danger-sm" onclick="updateStatus(${s.id},'SUSPENDED')">Suspend</button>` : ''}
+        </div>
+      </td>
+    </tr>`).join('');
+}
+
+function filterSellers() {
+  const q = document.getElementById('seller-search').value.toLowerCase();
+  renderSellers(allSellers.filter(s =>
+    s.name.toLowerCase().includes(q) ||
+    s.email.toLowerCase().includes(q) ||
+    (s.gstNumber || '').toLowerCase().includes(q)
+  ));
+}
+
+async function addSeller() {
+  const name      = document.getElementById('s-name').value.trim();
+  const email     = document.getElementById('s-email').value.trim();
+  const phone     = document.getElementById('s-phone').value.trim();
+  const gstNumber = document.getElementById('s-gst').value.trim();
+  const address   = document.getElementById('s-address').value.trim();
+
+  if (!name || !email || !phone) {
+    showToast('Name, Email and Phone are required.', 'error'); return;
+  }
+  showLoading();
+  try {
+    await apiPost('/sellers', { name, email, phone, gstNumber, address });
+    showToast('Seller registered successfully!', 'success');
+    ['s-name','s-email','s-phone','s-gst','s-address'].forEach(id =>
+      document.getElementById(id).value = '');
+    toggleForm();
+    loadSellers();
+  } catch(e) {
+    showToast(e.message, 'error');
+  } finally { hideLoading(); }
+}
+
+async function updateStatus(id, status) {
+  if (!confirm(`Change seller #${id} status to ${status}?`)) return;
+  showLoading();
+  try {
+    const res = await fetch(`${API_BASE}/sellers/${id}/status?status=${status}`, { method: 'PATCH' });
+    const json = await res.json();
+    if (!json.success) throw new Error(json.message);
+    showToast(`Status updated to ${status}`, 'success');
+    loadSellers();
+  } catch(e) {
+    showToast('Update failed: ' + e.message, 'error');
+  } finally { hideLoading(); }
+}
+
+function toggleForm() {
+  const f = document.getElementById('add-form');
+  f.style.display = f.style.display === 'none' ? 'block' : 'none';
+}
+
+loadSellers();
+</script>
+</body>
+</html>

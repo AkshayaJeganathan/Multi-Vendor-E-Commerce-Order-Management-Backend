@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Orders — VendorHub Admin</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-icon">🛒</div>
+    <h5>VendorHub</h5>
+    <small>Admin Panel v1.0</small>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section-label">Main</div>
+    <a href="index.html"><span class="nav-icon">📊</span> Dashboard</a>
+    <div class="nav-section-label">Management</div>
+    <a href="sellers.html"><span class="nav-icon">🏪</span> Sellers</a>
+    <a href="products.html"><span class="nav-icon">📦</span> Products</a>
+    <a href="orders.html"><span class="nav-icon">🧾</span> Orders</a>
+    <div class="nav-section-label">Operations</div>
+    <a href="returns.html"><span class="nav-icon">↩️</span> Returns</a>
+    <a href="payouts.html"><span class="nav-icon">💰</span> Payouts</a>
+  </nav>
+  <div class="sidebar-footer"><small>© 2025 VendorHub Inc.</small></div>
+</aside>
+
+<div class="main-content">
+  <div class="topbar">
+    <div><span class="topbar-title">Orders</span><span class="topbar-subtitle">/ Fulfilment Pipeline</span></div>
+    <div class="topbar-right">
+      <button class="btn-accent" onclick="toggleSection('place-order-section')">+ Place Order</button>
+    </div>
+  </div>
+
+  <div class="page-body">
+
+    <!-- PIPELINE STATUS TABS -->
+    <div style="display:flex;gap:10px;margin-bottom:22px;flex-wrap:wrap">
+      <button class="filter-tab active" data-status="ALL"       onclick="filterByStatus('ALL',this)">All Orders</button>
+      <button class="filter-tab" data-status="PLACED"          onclick="filterByStatus('PLACED',this)">Placed</button>
+      <button class="filter-tab" data-status="CONFIRMED"       onclick="filterByStatus('CONFIRMED',this)">Confirmed</button>
+      <button class="filter-tab" data-status="SHIPPED"         onclick="filterByStatus('SHIPPED',this)">Shipped</button>
+      <button class="filter-tab" data-status="DELIVERED"       onclick="filterByStatus('DELIVERED',this)">Delivered</button>
+      <button class="filter-tab" data-status="CANCELLED"       onclick="filterByStatus('CANCELLED',this)">Cancelled</button>
+      <button class="filter-tab" data-status="RETURN_REQUESTED" onclick="filterByStatus('RETURN_REQUESTED',this)">Return Requested</button>
+      <button class="filter-tab" data-status="RETURNED"        onclick="filterByStatus('RETURNED',this)">Returned</button>
+    </div>
+
+    <!-- PLACE ORDER FORM -->
+    <div class="form-section" id="place-order-section" style="margin-bottom:24px;display:none">
+      <h6>🛒 Place New Order</h6>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+        <div>
+          <label class="form-label-custom">Customer *</label>
+          <select class="form-control-custom" id="o-customer">
+            <option value="">— Select Customer —</option>
+          </select>
+        </div>
+        <div>
+          <label class="form-label-custom">Shipping Address</label>
+          <input class="form-control-custom" id="o-address" placeholder="Leave blank to use customer address">
+        </div>
+      </div>
+
+      <div style="background:var(--surface-2);border:1.5px dashed var(--border);border-radius:10px;padding:18px;margin-bottom:16px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+          <span style="font-size:13px;font-weight:700;color:var(--text-primary)">Order Items</span>
+          <button class="btn-outline" onclick="addItemRow()" style="font-size:12px;padding:6px 12px">+ Add Item</button>
+        </div>
+        <div id="items-container">
+          <!-- item rows inserted here -->
+        </div>
+      </div>
+
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div style="font-size:14px;color:var(--text-secondary)">
+          Estimated Total: <strong id="order-total" style="font-family:'Syne',sans-serif;font-size:18px;color:var(--accent)">₹0.00</strong>
+        </div>
+        <div style="display:flex;gap:10px">
+          <button class="btn-accent" onclick="placeOrder()">Place Order</button>
+          <button class="btn-outline" onclick="toggleSection('place-order-section')">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ORDERS TABLE -->
+    <div class="card">
+      <div class="card-header-custom">
+        <h6>Orders <span id="order-count" style="font-size:12px;color:var(--text-muted);font-weight:400"></span></h6>
+        <div style="display:flex;gap:10px;align-items:center">
+          <div class="search-bar">
+            <span>🔍</span>
+            <input type="text" id="order-search" placeholder="Search order number..." oninput="filterOrders()">
+          </div>
+          <button class="btn-outline" onclick="loadOrders()" style="font-size:12px;padding:7px 14px">↻ Refresh</button>
+        </div>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="custom-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Order No.</th>
+              <th>Customer</th>
+              <th>Items</th>
+              <th>Total</th>
+              <th>Status</th>
+              <th>Placed At</th>
+              <th>Next Action</th>
+            </tr>
+          </thead>
+          <tbody id="orders-tbody">
+            <tr><td colspan="8"><div class="empty-state"><div class="empty-icon">🧾</div><p>Loading orders...</p></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ORDER DETAIL MODAL -->
+    <div id="order-modal" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.6);z-index:2000;align-items:center;justify-content:center;backdrop-filter:blur(3px)">
+      <div style="background:var(--surface);border-radius:16px;width:680px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.25)">
+        <div style="padding:22px 24px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+          <h5 style="font-family:'Syne',sans-serif;font-weight:800;font-size:17px" id="modal-title">Order Details</h5>
+          <button onclick="closeModal()" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--text-muted)">×</button>
+        </div>
+        <div id="modal-body" style="padding:24px"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<style>
+.filter-tab {
+  padding: 7px 16px;
+  border: 1.5px solid var(--border);
+  border-radius: 20px;
+  background: var(--surface);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all .2s;
+}
+.filter-tab:hover { border-color: var(--accent); color: var(--accent); }
+.filter-tab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+.item-row { display:grid; grid-template-columns:1fr 80px 80px auto; gap:10px; align-items:end; margin-bottom:10px; }
+</style>
+
+<script src="js/api.js"></script>
+<script>
+
+let allOrders = [];
+let allProducts = [];
+let allCustomers = [];
+let currentFilter = 'ALL';
+
+async function init() {
+  showLoading();
+  try {
+    [allOrders, allProducts, allCustomers] = await Promise.all([
+      apiGet('/orders'),
+      apiGet('/products'),
+      apiGet('/customers')
+    ]);
+    populateCustomerSelect();
+    renderOrders(allOrders);
+    document.getElementById('order-count').textContent = `(${allOrders.length})`;
+    addItemRow();
+  } catch(e) {
+    showToast('Failed to load data: ' + e.message, 'error');
+  } finally { hideLoading(); }
+}
+
+function populateCustomerSelect() {
+  const sel = document.getElementById('o-customer');
+  sel.innerHTML = '<option value="">— Select Customer —</option>' +
+    allCustomers.map(c => `<option value="${c.id}">${c.name} (${c.email})</option>`).join('');
+}
+
+function addItemRow() {
+  const container = document.getElementById('items-container');
+  const idx = container.children.length;
+  const productOptions = allProducts
+    .filter(p => p.status === 'ACTIVE')
+    .map(p => `<option value="${p.id}" data-price="${p.price}">${p.name} — ${formatCurrency(p.price)} (${p.availableQuantity || 0} avail.)</option>`)
+    .join('');
+
+  const row = document.createElement('div');
+  row.className = 'item-row';
+  row.innerHTML = `
+    <div>
+      <label class="form-label-custom">Product</label>
+      <select class="form-control-custom" name="product" onchange="recalcTotal()">
+        <option value="">— Select Product —</option>
+        ${productOptions}
+      </select>
+    </div>
+    <div>
+      <label class="form-label-custom">Qty</label>
+      <input class="form-control-custom" type="number" name="qty" value="1" min="1" oninput="recalcTotal()">
+    </div>
+    <div>
+      <label class="form-label-custom">Unit Price</label>
+      <input class="form-control-custom" name="price" readonly placeholder="Auto">
+    </div>
+    <div>
+      <label class="form-label-custom">&nbsp;</label>
+      <button class="btn-sm-action btn-danger-sm" onclick="this.closest('.item-row').remove();recalcTotal()" style="padding:9px 14px">✕</button>
+    </div>`;
+
+  row.querySelector('select[name="product"]').addEventListener('change', function() {
+    const opt = this.options[this.selectedIndex];
+    const price = opt.dataset.price || '';
+    row.querySelector('input[name="price"]').value = price ? formatCurrency(price) : '';
+    recalcTotal();
+  });
+  container.appendChild(row);
+}
+
+function recalcTotal() {
+  let total = 0;
+  document.querySelectorAll('.item-row').forEach(row => {
+    const sel = row.querySelector('select[name="product"]');
+    const qty = parseInt(row.querySelector('input[name="qty"]').value) || 0;
+    const opt = sel.options[sel.selectedIndex];
+    const price = parseFloat(opt?.dataset?.price || 0);
+    total += price * qty;
+  });
+  document.getElementById('order-total').textContent = formatCurrency(total);
+}
+
+async function placeOrder() {
+  const customerId = document.getElementById('o-customer').value;
+  const shippingAddress = document.getElementById('o-address').value.trim();
+  if (!customerId) { showToast('Please select a customer.', 'error'); return; }
+
+  const items = [];
+  let valid = true;
+  document.querySelectorAll('.item-row').forEach(row => {
+    const productId = row.querySelector('select[name="product"]').value;
+    const quantity  = parseInt(row.querySelector('input[name="qty"]').value);
+    if (!productId || !quantity || quantity < 1) { valid = false; return; }
+    items.push({ productId: parseInt(productId), quantity });
+  });
+
+  if (!valid || items.length === 0) {
+    showToast('Add at least one valid item with product and quantity.', 'error'); return;
+  }
+
+  showLoading();
+  try {
+    const order = await apiPost('/orders', { customerId: parseInt(customerId), shippingAddress, items });
+    showToast(`Order ${order.orderNumber} placed successfully!`, 'success');
+    toggleSection('place-order-section');
+    document.getElementById('items-container').innerHTML = '';
+    addItemRow();
+    await init();
+  } catch(e) {
+    showToast(e.message, 'error');
+  } finally { hideLoading(); }
+}
+
+function filterByStatus(status, btn) {
+  currentFilter = status;
+  document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  filterOrders();
+}
+
+function filterOrders() {
+  const q = document.getElementById('order-search').value.toLowerCase();
+  let list = allOrders;
+  if (currentFilter !== 'ALL') list = list.filter(o => o.status === currentFilter);
+  if (q) list = list.filter(o => o.orderNumber.toLowerCase().includes(q) ||
+                                  o.customerName?.toLowerCase().includes(q));
+  renderOrders(list);
+  document.getElementById('order-count').textContent = `(${list.length})`;
+}
+
+async function loadOrders() {
+  showLoading();
+  try {
+    allOrders = await apiGet('/orders');
+    filterOrders();
+    document.getElementById('order-count').textContent = `(${allOrders.length})`;
+  } catch(e) {
+    showToast('Refresh failed: ' + e.message, 'error');
+  } finally { hideLoading(); }
+}
+
+function nextActions(order) {
+  const map = {
+    'PLACED':    [['Confirm', 'CONFIRMED', 'btn-info-sm'],    ['Cancel', 'CANCELLED', 'btn-danger-sm']],
+    'CONFIRMED': [['Ship',    'SHIPPED',   'btn-info-sm'],    ['Cancel', 'CANCELLED', 'btn-danger-sm']],
+    'SHIPPED':   [['Deliver', 'DELIVERED', 'btn-success-sm']],
+    'DELIVERED': [],
+    'CANCELLED': [],
+    'RETURN_REQUESTED': [],
+    'RETURNED':  []
+  };
+  const actions = map[order.status] || [];
+  if (!actions.length) return '<span style="color:var(--text-muted);font-size:12px">—</span>';
+  return actions.map(([label, status, cls]) =>
+    `<button class="btn-sm-action ${cls}" onclick="updateStatus(${order.id},'${status}')">${label}</button>`
+  ).join(' ');
+}
+
+function renderOrders(list) {
+  const tbody = document.getElementById('orders-tbody');
+  if (!list.length) {
+    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><div class="empty-icon">🧾</div><p>No orders found.</p></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = list.map(o => `
+    <tr>
+      <td><strong>#${o.id}</strong></td>
+      <td>
+        <span style="font-family:monospace;font-size:12px;background:var(--surface-2);padding:3px 8px;border-radius:6px;cursor:pointer;color:var(--accent)"
+              onclick='showDetail(${JSON.stringify(o).replace(/'/g,"&#39;")})'>
+          ${o.orderNumber}
+        </span>
+      </td>
+      <td><strong>${o.customerName || '—'}</strong></td>
+      <td style="color:var(--text-secondary)">${(o.items||[]).length} item(s)</td>
+      <td class="text-amount">${formatCurrency(o.totalAmount)}</td>
+      <td>${badgeHtml(o.status)}</td>
+      <td style="font-size:12px;color:var(--text-muted)">${formatDate(o.placedAt)}</td>
+      <td><div style="display:flex;gap:6px;flex-wrap:wrap">${nextActions(o)}</div></td>
+    </tr>`).join('');
+}
+
+async function updateStatus(id, status) {
+  if (!confirm(`Update order #${id} status to ${status}?`)) return;
+  showLoading();
+  try {
+    await apiPatch(`/orders/${id}/status`, { status });
+    showToast(`Order status updated to ${status}`, 'success');
+    await loadOrders();
+  } catch(e) {
+    showToast(e.message, 'error');
+  } finally { hideLoading(); }
+}
+
+function showDetail(order) {
+  const items = (order.items || []).map(i => `
+    <tr>
+      <td>${i.productName}</td>
+      <td>${i.sellerName}</td>
+      <td>${i.quantity}</td>
+      <td>${formatCurrency(i.unitPrice)}</td>
+      <td><strong>${formatCurrency(i.totalPrice)}</strong></td>
+    </tr>`).join('');
+
+  document.getElementById('modal-title').textContent = `Order — ${order.orderNumber}`;
+  document.getElementById('modal-body').innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:20px">
+      <div>
+        <div style="font-size:11px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px">Customer</div>
+        <div style="font-weight:600">${order.customerName}</div>
+      </div>
+      <div>
+        <div style="font-size:11px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px">Status</div>
+        <div>${badgeHtml(order.status)}</div>
+      </div>
+      <div>
+        <div style="font-size:11px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px">Shipping Address</div>
+        <div style="font-size:13px;color:var(--text-secondary)">${order.shippingAddress || '—'}</div>
+      </div>
+      <div>
+        <div style="font-size:11px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px">Placed At</div>
+        <div style="font-size:13px">${formatDate(order.placedAt)}</div>
+      </div>
+      ${order.shippedAt ? `<div><div style="font-size:11px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px">Shipped At</div><div style="font-size:13px">${formatDate(order.shippedAt)}</div></div>` : ''}
+      ${order.deliveredAt ? `<div><div style="font-size:11px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px">Delivered At</div><div style="font-size:13px">${formatDate(order.deliveredAt)}</div></div>` : ''}
+    </div>
+
+    <div style="font-size:13px;font-weight:700;margin-bottom:10px;color:var(--text-primary)">Order Items</div>
+    <div style="overflow-x:auto;border-radius:8px;border:1px solid var(--border)">
+      <table class="custom-table">
+        <thead><tr><th>Product</th><th>Seller</th><th>Qty</th><th>Unit Price</th><th>Total</th></tr></thead>
+        <tbody>${items || '<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--text-muted)">No items</td></tr>'}</tbody>
+      </table>
+    </div>
+    <div style="text-align:right;margin-top:16px;font-size:16px;font-family:'Syne',sans-serif;font-weight:800">
+      Grand Total: <span style="color:var(--accent)">${formatCurrency(order.totalAmount)}</span>
+    </div>`;
+
+  document.getElementById('order-modal').style.display = 'flex';
+}
+
+function closeModal() {
+  document.getElementById('order-modal').style.display = 'none';
+}
+
+function toggleSection(id) {
+  const el = document.getElementById(id);
+  el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
+init();
+</script>
+</body>
+</html>

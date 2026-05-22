@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Products — VendorHub Admin</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-icon">🛒</div>
+    <h5>VendorHub</h5>
+    <small>Admin Panel v1.0</small>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section-label">Main</div>
+    <a href="index.html"><span class="nav-icon">📊</span> Dashboard</a>
+    <div class="nav-section-label">Management</div>
+    <a href="sellers.html"><span class="nav-icon">🏪</span> Sellers</a>
+    <a href="products.html"><span class="nav-icon">📦</span> Products</a>
+    <a href="orders.html"><span class="nav-icon">🧾</span> Orders</a>
+    <div class="nav-section-label">Operations</div>
+    <a href="returns.html"><span class="nav-icon">↩️</span> Returns</a>
+    <a href="payouts.html"><span class="nav-icon">💰</span> Payouts</a>
+  </nav>
+  <div class="sidebar-footer"><small>© 2025 VendorHub Inc.</small></div>
+</aside>
+
+<div class="main-content">
+  <div class="topbar">
+    <div><span class="topbar-title">Products</span><span class="topbar-subtitle">/ Catalogue Management</span></div>
+    <div class="topbar-right">
+      <button class="btn-accent" onclick="toggleForm()">+ Add Product</button>
+    </div>
+  </div>
+
+  <div class="page-body">
+
+    <!-- STAT STRIP -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:16px;margin-bottom:24px">
+      <div class="stat-card" style="padding:18px 20px">
+        <div class="stat-icon blue" style="width:36px;height:36px;font-size:16px;margin-bottom:10px">📦</div>
+        <div class="stat-value" style="font-size:24px" id="p-total">—</div>
+        <div class="stat-label">Total Products</div>
+      </div>
+      <div class="stat-card" style="padding:18px 20px">
+        <div class="stat-icon green" style="width:36px;height:36px;font-size:16px;margin-bottom:10px">✅</div>
+        <div class="stat-value" style="font-size:24px" id="p-active">—</div>
+        <div class="stat-label">Active</div>
+      </div>
+      <div class="stat-card" style="padding:18px 20px">
+        <div class="stat-icon red" style="width:36px;height:36px;font-size:16px;margin-bottom:10px">📭</div>
+        <div class="stat-value" style="font-size:24px" id="p-out-of-stock">—</div>
+        <div class="stat-label">Out of Stock</div>
+      </div>
+      <div class="stat-card" style="padding:18px 20px">
+        <div class="stat-icon amber" style="width:36px;height:36px;font-size:16px;margin-bottom:10px">⏸</div>
+        <div class="stat-value" style="font-size:24px" id="p-inactive">—</div>
+        <div class="stat-label">Inactive</div>
+      </div>
+    </div>
+
+    <!-- ADD PRODUCT FORM -->
+    <div class="form-section" id="add-form" style="margin-bottom:24px;display:none">
+      <h6>📦 Add New Product</h6>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px">
+        <div>
+          <label class="form-label-custom">Seller *</label>
+          <select class="form-control-custom" id="p-seller">
+            <option value="">— Select Seller —</option>
+          </select>
+        </div>
+        <div>
+          <label class="form-label-custom">Product Name *</label>
+          <input class="form-control-custom" id="p-name" placeholder="e.g. Wireless Headphones">
+        </div>
+        <div>
+          <label class="form-label-custom">Category</label>
+          <input class="form-control-custom" id="p-category" placeholder="e.g. Electronics">
+        </div>
+        <div>
+          <label class="form-label-custom">SKU</label>
+          <input class="form-control-custom" id="p-sku" placeholder="e.g. SKU-ELEC-001">
+        </div>
+        <div>
+          <label class="form-label-custom">Sale Price (₹) *</label>
+          <input class="form-control-custom" id="p-price" type="number" step="0.01" placeholder="999.00">
+        </div>
+        <div>
+          <label class="form-label-custom">MRP (₹)</label>
+          <input class="form-control-custom" id="p-mrp" type="number" step="0.01" placeholder="1499.00">
+        </div>
+        <div>
+          <label class="form-label-custom">Initial Stock</label>
+          <input class="form-control-custom" id="p-stock" type="number" value="0" min="0">
+        </div>
+        <div style="grid-column:1/-1">
+          <label class="form-label-custom">Description</label>
+          <textarea class="form-control-custom" id="p-desc" rows="2" placeholder="Product description..."></textarea>
+        </div>
+      </div>
+      <div style="margin-top:18px;display:flex;gap:10px">
+        <button class="btn-accent" onclick="addProduct()">Add Product</button>
+        <button class="btn-outline" onclick="toggleForm()">Cancel</button>
+      </div>
+    </div>
+
+    <!-- RESTOCK FORM -->
+    <div class="form-section" id="restock-form" style="margin-bottom:24px;display:none;border-left:3px solid var(--success)">
+      <h6 style="color:var(--success)">📥 Restock Product</h6>
+      <div style="display:flex;gap:14px;align-items:flex-end">
+        <div style="flex:1">
+          <label class="form-label-custom">Product ID</label>
+          <input class="form-control-custom" id="rs-product-id" type="number" placeholder="Product ID" readonly>
+        </div>
+        <div style="flex:2">
+          <label class="form-label-custom">Product Name</label>
+          <input class="form-control-custom" id="rs-product-name" readonly>
+        </div>
+        <div style="flex:1">
+          <label class="form-label-custom">Add Quantity</label>
+          <input class="form-control-custom" id="rs-qty" type="number" min="1" value="10">
+        </div>
+        <div>
+          <button class="btn-accent" onclick="addStock()" style="background:var(--success)">Add Stock</button>
+          <button class="btn-outline" onclick="document.getElementById('restock-form').style.display='none'" style="margin-left:8px">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- FILTER & TABLE -->
+    <div class="card">
+      <div class="card-header-custom">
+        <h6>Product Catalogue <span id="product-count" style="font-size:12px;color:var(--text-muted);font-weight:400"></span></h6>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <select class="form-control-custom" id="category-filter" onchange="filterProducts()" style="width:140px;padding:7px 10px;font-size:12px">
+            <option value="">All Categories</option>
+          </select>
+          <div class="search-bar">
+            <span>🔍</span>
+            <input type="text" id="product-search" placeholder="Search products..." oninput="filterProducts()">
+          </div>
+          <button class="btn-outline" onclick="loadProducts()" style="font-size:12px;padding:7px 14px">↻ Refresh</button>
+        </div>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="custom-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Product</th>
+              <th>Seller</th>
+              <th>Category</th>
+              <th>Price / MRP</th>
+              <th>SKU</th>
+              <th>Stock</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="products-tbody">
+            <tr><td colspan="9"><div class="empty-state"><div class="empty-icon">📦</div><p>Loading products...</p></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="js/api.js"></script>
+<script>
+
+let allProducts = [];
+let allSellers  = [];
+
+async function init() {
+  showLoading();
+  try {
+    [allProducts, allSellers] = await Promise.all([
+      apiGet('/products'),
+      apiGet('/sellers')
+    ]);
+    populateSellerSelect();
+    populateCategoryFilter();
+    renderStats(allProducts);
+    renderProducts(allProducts);
+    document.getElementById('product-count').textContent = `(${allProducts.length})`;
+  } catch(e) {
+    showToast('Failed to load data: ' + e.message, 'error');
+  } finally { hideLoading(); }
+}
+
+function renderStats(list) {
+  document.getElementById('p-total').textContent        = list.length;
+  document.getElementById('p-active').textContent       = list.filter(p => p.status === 'ACTIVE').length;
+  document.getElementById('p-out-of-stock').textContent = list.filter(p => p.status === 'OUT_OF_STOCK').length;
+  document.getElementById('p-inactive').textContent     = list.filter(p => p.status === 'INACTIVE').length;
+}
+
+function populateSellerSelect() {
+  const sel = document.getElementById('p-seller');
+  sel.innerHTML = '<option value="">— Select Seller —</option>' +
+    allSellers.filter(s => s.status === 'ACTIVE')
+      .map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+}
+
+function populateCategoryFilter() {
+  const cats = [...new Set(allProducts.map(p => p.category).filter(Boolean))];
+  const sel = document.getElementById('category-filter');
+  sel.innerHTML = '<option value="">All Categories</option>' +
+    cats.map(c => `<option value="${c}">${c}</option>`).join('');
+}
+
+function filterProducts() {
+  const q   = document.getElementById('product-search').value.toLowerCase();
+  const cat = document.getElementById('category-filter').value;
+  let list  = allProducts;
+  if (cat) list = list.filter(p => p.category === cat);
+  if (q)   list = list.filter(p =>
+    p.name.toLowerCase().includes(q) ||
+    (p.sku || '').toLowerCase().includes(q) ||
+    (p.sellerName || '').toLowerCase().includes(q)
+  );
+  renderProducts(list);
+  document.getElementById('product-count').textContent = `(${list.length})`;
+}
+
+function renderProducts(list) {
+  const tbody = document.getElementById('products-tbody');
+  if (!list.length) {
+    tbody.innerHTML = `<tr><td colspan="9"><div class="empty-state"><div class="empty-icon">📦</div><p>No products found.</p></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = list.map(p => {
+    const stockColor = (p.availableQuantity || 0) <= 5 ? 'var(--danger)' : (p.availableQuantity || 0) <= 20 ? 'var(--warning)' : 'var(--success)';
+    const discount   = p.mrp && p.price ? Math.round((1 - p.price/p.mrp)*100) : 0;
+    return `
+    <tr>
+      <td><strong>#${p.id}</strong></td>
+      <td>
+        <div style="font-weight:600">${p.name}</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:2px">${p.description ? p.description.slice(0,50)+'…' : ''}</div>
+      </td>
+      <td>
+        <span style="font-size:12px;background:var(--surface-2);padding:2px 8px;border-radius:6px;color:var(--text-secondary)">${p.sellerName || '—'}</span>
+      </td>
+      <td style="font-size:12px;color:var(--text-secondary)">${p.category || '—'}</td>
+      <td>
+        <div class="text-amount" style="font-size:14px">${formatCurrency(p.price)}</div>
+        ${p.mrp ? `<div style="font-size:11px;color:var(--text-muted);text-decoration:line-through">${formatCurrency(p.mrp)}</div>` : ''}
+        ${discount > 0 ? `<div style="font-size:10px;color:var(--success);font-weight:700">${discount}% off</div>` : ''}
+      </td>
+      <td><code style="font-size:11px;background:var(--surface-2);padding:2px 7px;border-radius:4px">${p.sku || '—'}</code></td>
+      <td>
+        <span style="font-weight:700;font-size:14px;color:${stockColor}">${p.availableQuantity ?? '—'}</span>
+        <span style="font-size:10px;color:var(--text-muted)"> units</span>
+        <div>
+          <button class="btn-sm-action btn-info-sm" style="font-size:10px;padding:2px 8px;margin-top:3px" onclick="openRestock(${p.id},'${p.name.replace(/'/g,"\\'")}')">+ Restock</button>
+        </div>
+      </td>
+      <td>${badgeHtml(p.status)}</td>
+      <td>
+        <div style="display:flex;gap:5px;flex-wrap:wrap">
+          ${p.status !== 'ACTIVE'
+            ? `<button class="btn-sm-action btn-success-sm" onclick="updateStatus(${p.id},'ACTIVE')">Activate</button>` : ''}
+          ${p.status !== 'INACTIVE'
+            ? `<button class="btn-sm-action btn-warning-sm" onclick="updateStatus(${p.id},'INACTIVE')">Deactivate</button>` : ''}
+        </div>
+      </td>
+    </tr>`}).join('');
+}
+
+async function addProduct() {
+  const sellerId    = document.getElementById('p-seller').value;
+  const name        = document.getElementById('p-name').value.trim();
+  const category    = document.getElementById('p-category').value.trim();
+  const sku         = document.getElementById('p-sku').value.trim();
+  const price       = parseFloat(document.getElementById('p-price').value);
+  const mrp         = parseFloat(document.getElementById('p-mrp').value) || null;
+  const initialStock = parseInt(document.getElementById('p-stock').value) || 0;
+  const description = document.getElementById('p-desc').value.trim();
+
+  if (!sellerId || !name || !price) {
+    showToast('Seller, Name and Price are required.', 'error'); return;
+  }
+  showLoading();
+  try {
+    await apiPost('/products', { sellerId: parseInt(sellerId), name, description, category, price, mrp, sku, initialStock });
+    showToast('Product added successfully!', 'success');
+    toggleForm();
+    await init();
+  } catch(e) {
+    showToast(e.message, 'error');
+  } finally { hideLoading(); }
+}
+
+async function updateStatus(id, status) {
+  if (!confirm(`Change product #${id} status to ${status}?`)) return;
+  showLoading();
+  try {
+    const res = await fetch(`${API_BASE}/products/${id}/status?status=${status}`, { method: 'PATCH' });
+    const json = await res.json();
+    if (!json.success) throw new Error(json.message);
+    showToast(`Status updated to ${status}`, 'success');
+    await init();
+  } catch(e) {
+    showToast(e.message, 'error');
+  } finally { hideLoading(); }
+}
+
+function openRestock(id, name) {
+  document.getElementById('rs-product-id').value   = id;
+  document.getElementById('rs-product-name').value = name;
+  document.getElementById('rs-qty').value = 10;
+  document.getElementById('restock-form').style.display = 'block';
+  document.getElementById('restock-form').scrollIntoView({ behavior:'smooth' });
+}
+
+async function addStock() {
+  const productId = parseInt(document.getElementById('rs-product-id').value);
+  const quantity  = parseInt(document.getElementById('rs-qty').value);
+  if (!productId || !quantity || quantity < 1) {
+    showToast('Enter a valid quantity.', 'error'); return;
+  }
+  showLoading();
+  try {
+    const res = await fetch(`${API_BASE}/inventory/product/${productId}/add?quantity=${quantity}`, { method: 'POST' });
+    const json = await res.json();
+    if (!json.success) throw new Error(json.message);
+    showToast(`Added ${quantity} units to stock!`, 'success');
+    document.getElementById('restock-form').style.display = 'none';
+    await init();
+  } catch(e) {
+    showToast(e.message, 'error');
+  } finally { hideLoading(); }
+}
+
+async function loadProducts() { await init(); }
+
+function toggleForm() {
+  const f = document.getElementById('add-form');
+  f.style.display = f.style.display === 'none' ? 'block' : 'none';
+}
+
+init();
+</script>
+</body>
+</html>
